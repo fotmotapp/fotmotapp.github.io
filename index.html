@@ -1,118 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strangers Chat</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Flask Chat</title>
+    <link rel="stylesheet" type="text/css" href="/styles.css">
 </head>
 <body>
-    <h1>Strangers Chat</h1>
-    <div id="registration">
-        <h2>Register</h2>
-        <form id="registerForm">
-            Gender:
-            <select id="gender" name="gender">
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-            </select><br>
-            Seeking:
-            <select id="seeking" name="seeking">
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-            </select><br>
-            <button type="submit">Register</button>
-        </form>
-    </div>
-
-    <div id="chat" style="display:none;">
+    <h1>Welcome to Flask Chat</h1>
+    <form id="registerForm">
+        <label for="gender">Choose your gender:</label>
+        <select id="gender" name="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select>
+        <button type="submit">Register</button>
+    </form>
+    <div id="chatContainer" style="display:none;">
         <h2>Chat</h2>
-        <button id="connect">Connect</button>
         <div id="messages"></div>
-        <input type="text" id="messageInput" placeholder="Type a message">
-        <button id="sendMessage">Send</button>
-        <button id="disconnect">Disconnect</button>
+        <form id="messageForm">
+            <input type="text" id="message" name="message" placeholder="Type a message">
+            <button type="submit">Send</button>
+        </form>
+        <button id="disconnectButton">Disconnect</button>
     </div>
-
-    <script>
-        $(document).ready(function() {
-            $('#registerForm').on('submit', function(e) {
-                e.preventDefault();
-                $.ajax({
-                    url: 'https://fotmotapp.pythonanywhere.com/register',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        gender: $('#gender').val(),
-                        seeking: $('#seeking').val()
-                    }),
-                    success: function() {
-                        $('#registration').hide();
-                        $('#chat').show();
-                    }
-                });
-            });
-
-            $('#connect').on('click', function() {
-                $.ajax({
-                    url: 'https://fotmotapp.pythonanywhere.com/connect',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    success: function(data) {
-                        if (data.connected_user_id) {
-                            alert('Connected to user ' + data.connected_user_id);
-                        } else {
-                            alert(data.error);
-                        }
-                    }
-                });
-            });
-
-            $('#sendMessage').on('click', function() {
-                $.ajax({
-                    url: 'https://fotmotapp.pythonanywhere.com/send_message',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        recipient_id: 'recipient_id_placeholder', // Update this with the actual recipient ID
-                        message: $('#messageInput').val()
-                    }),
-                    success: function() {
-                        $('#messageInput').val('');
-                    }
-                });
-            });
-
-            $('#disconnect').on('click', function() {
-                $.ajax({
-                    url: 'https://fotmotapp.pythonanywhere.com/disconnect',
-                    method: 'POST',
-                    success: function() {
-                        $('#chat').hide();
-                        $('#registration').show();
-                    }
-                });
-            });
-
-            function pollMessages() {
-                $.ajax({
-                    url: 'https://fotmotapp.pythonanywhere.com/get_messages',
-                    method: 'GET',
-                    success: function(data) {
-                        var messagesDiv = $('#messages');
-                        messagesDiv.empty();
-                        data.messages.forEach(function(msg) {
-                            messagesDiv.append('<div>' + msg.from + ': ' + msg.message + '</div>');
-                        });
-                    },
-                    complete: function() {
-                        setTimeout(pollMessages, 2000); // Poll every 2 seconds
-                    }
-                });
-            }
-
-            pollMessages(); // Start polling
-        });
-    </script>
+    <script src="/script.js"></script>
 </body>
 </html>
