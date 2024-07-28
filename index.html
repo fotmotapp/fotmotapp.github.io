@@ -6,7 +6,31 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <div id="status">Connecting...</div>
+    <div id="connection-form">
+        <h2>Enter Your Details</h2>
+        <form id="start-form">
+            <label for="gender">Your Gender:</label>
+            <select id="gender" name="gender">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="non-binary">Non-binary</option>
+                <option value="other">Other</option>
+            </select><br>
+            
+            <label for="seeking">Seeking:</label>
+            <select id="seeking" name="seeking">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="non-binary">Non-binary</option>
+                <option value="other">Other</option>
+                <option value="any">Any</option>
+            </select><br>
+            
+            <button type="button" onclick="startConnection()">Start</button>
+        </form>
+    </div>
+    
+    <div id="status" style="display: none;">Connecting...</div>
     <div id="chatbox" style="display: none;">
         <div id="messages"></div>
         <input type="text" id="message" placeholder="Type your message...">
@@ -17,14 +41,18 @@
     <script>
         var clientId = '';
 
-        function connect(gender, seeking) {
+        function startConnection() {
+            var gender = $('#gender').val();
+            var seeking = $('#seeking').val();
+
             $.ajax({
                 type: 'POST',
-                url: '/connect',
+                url: 'https://fotmotapp.pythonanywhere.com/connect',
                 data: { gender: gender, seeking: seeking },
                 success: function(response) {
                     clientId = response.client_id;
-                    $('#status').hide();
+                    $('#connection-form').hide();
+                    $('#status').show();
                     $('#chatbox').show();
                     pollMessages();
                 },
@@ -38,7 +66,7 @@
             setTimeout(function() {
                 $.ajax({
                     type: 'GET',
-                    url: '/poll/' + clientId,
+                    url: 'https://fotmotapp.pythonanywhere.com/poll/' + clientId,
                     success: function(messages) {
                         displayMessages(messages);
                         pollMessages();
@@ -62,7 +90,7 @@
             if (message !== '') {
                 $.ajax({
                     type: 'POST',
-                    url: '/send/' + clientId,
+                    url: 'https://fotmotapp.pythonanywhere.com/send/' + clientId,
                     contentType: 'application/json',
                     data: JSON.stringify({ message: message }),
                     success: function(response) {
@@ -78,22 +106,18 @@
         function disconnect() {
             $.ajax({
                 type: 'POST',
-                url: '/disconnect/' + clientId,
+                url: 'https://fotmotapp.pythonanywhere.com/disconnect/' + clientId,
                 success: function(response) {
                     alert('Disconnected successfully');
                     $('#chatbox').hide();
                     $('#status').show().text('Connecting...');
+                    $('#connection-form').show();
                 },
                 error: function(xhr, status, error) {
                     console.error('Error disconnecting:', error);
                 }
             });
         }
-
-        // Start connection on page load (replace with appropriate gender and seeking)
-        $(document).ready(function() {
-            connect('male', 'female');  // Example: Connect as male seeking female
-        });
     </script>
 </body>
 </html>
