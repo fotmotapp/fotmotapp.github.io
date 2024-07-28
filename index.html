@@ -1,28 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Flask Chat</title>
-    <link rel="stylesheet" type="text/css" href="/styles.css">
+    <meta charset="UTF-8">
+    <title>Random Chat</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Welcome to Flask Chat</h1>
-    <form id="registerForm">
-        <label for="gender">Choose your gender:</label>
-        <select id="gender" name="gender">
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-        </select>
-        <button type="submit">Register</button>
-    </form>
-    <div id="chatContainer" style="display:none;">
-        <h2>Chat</h2>
+    <div id="status">Connecting...</div>
+    <div id="chatbox" style="display: none;">
         <div id="messages"></div>
-        <form id="messageForm">
-            <input type="text" id="message" name="message" placeholder="Type a message">
-            <button type="submit">Send</button>
-        </form>
-        <button id="disconnectButton">Disconnect</button>
+        <input type="text" id="message" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="disconnect()">Disconnect</button>
     </div>
-    <script src="/script.js"></script>
+
+    <script>
+        var clientId = '';
+
+        function connect(gender, seeking) {
+            $.ajax({
+                type: 'POST',
+                url: '/connect',
+                data: { gender: gender, seeking: seeking },
+                success: function(response) {
+                    clientId = response.client_id;
+                    $('#status').hide();
+                    $('#chatbox').show();
+                    pollMessages();
+                },
+                error: function(xhr, status, error) {
+                    alert('Error connecting to server');
+                }
+            });
+        }
+
+        function pollMessages() {
+            setTimeout(function() {
+                $.ajax({
+                    type: 'GET',
+                    url: '/poll/' + clientId,
+                    success: function(messages) {
+                        displayMessages(messages);
+                        pollMessages();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error polling messages:', error);
+                    }
+                });
+            }, 2000); // Poll every 2 seconds (adjust as needed)
+        }
+
+        function displayMessages(messages) {
+            $('#messages').empty();
+            messages.forEach(function(msg) {
+                $('#messages').append('<p><strong>' + msg.sender + ':</strong> ' + msg.message + '</p>');
+            });
+        }
+
+        function sendMessage() {
+            var message = $('#message').val().trim();
+            if (message !== '') {
+                $.ajax({
+                    type: 'POST',
+                    url: '/send/' + clientId,
+                    contentType: 'application/json',
+                    data: JSON.stringify({ message: message }),
+                    success: function(response) {
+                        $('#message').val('');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error sending message:', error);
+                    }
+                });
+            }
+        }
+
+        function disconnect() {
+            $.ajax({
+                type: 'POST',
+                url: '/disconnect/' + clientId,
+                success: function(response) {
+                    alert('Disconnected successfully');
+                    $('#chatbox').hide();
+                    $('#status').show().text('Connecting...');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error disconnecting:', error);
+                }
+            });
+        }
+
+        // Start connection on page load (replace with appropriate gender and seeking)
+        $(document).ready(function() {
+            connect('male', 'female');  // Example: Connect as male seeking female
+        });
+    </script>
 </body>
 </html>
